@@ -1,0 +1,21 @@
+{
+    "CN": "dytt-favorite",
+    "key": {
+      "algo": "rsa",
+      "size": 2048
+    },
+    "names": [
+        {
+          "C": "CN",
+          "ST": "GuangDong",
+          "L": "ShenZhen",
+          "O": "jf-011101",
+          "OU": "dytt"
+        }
+    ],
+    "hosts": [
+      "127.0.0.1",
+      "localhost",
+      "dytt.favorite.com"
+    ]
+  }

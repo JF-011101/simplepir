@@ -1,0 +1,25 @@
+Global:
+  Source: "config(local)"
+  ChangeMe: "v3"
+
+TLS:
+  Name: "dytt-ca"
+  CertFileLocalAddr: "D:/gopath/src/github.com/jf-011101/simplepir/config/cert/user/dytt-user.pem"
+  KeyFileLocalAddr: "D:/gopath/src/github.com/jf-011101/simplepir/config/cert/user/dytt-user-key.pem"
+
+
+Etcd:
+  - Address: "127.0.0.1"
+    Port: 2379
+
+Server:
+  Name: "TiktokAPIServer"
+  Address: "0.0.0.0"
+  Port: 8088
+
+Client:
+  Echo: true
+  Foo: "bar"
+  Servers:
+    - "127.0.0.1"
+    - "192.168.1.1"

@@ -16,7 +16,7 @@ import (
 
 var (
 	DB     *gorm.DB
-	Config = ttviper.ConfigInit("TIKTOK_DB", "dbConfig")
+	Config = ttviper.ConfigInit("PIR_DB", "dbConfig")
 )
 
 // Init init DB
@@ -59,9 +59,9 @@ func InitDB() {
 		log.Panic(err.Error())
 	}
 
-	// if err := DB.AutoMigrate(&Pi{}, &Video{}, &Comment{}, &Relation{}); err != nil {
-	// 	log.Panic(err.Error())
-	// }
+	if err := DB.AutoMigrate(&Pi{}); err != nil {
+		log.Panic(err.Error())
+	}
 
 	sqlDB, err := DB.DB()
 	if err != nil {

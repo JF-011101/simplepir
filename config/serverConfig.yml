@@ -1,0 +1,34 @@
+Global:
+  Source: "config(local)"
+  ChangeMe: "v3"
+
+Server:
+  Name: "PirServer"
+  Address: "127.0.0.1"
+  Port: 8081
+  Argon2ID:
+    Memory: 64*1024
+    Iterations: 3
+    Parallelism: 2
+    SaltLength: 16
+    keyLength: 32
+
+Client:
+  Echo: true
+  Foo: "bar"
+  Servers:
+    - "127.0.0.1"
+    - "192.168.1.1"
+
+
+Etcd:
+  - Address: "127.0.0.1"
+    Port: 2379
+
+TLS:
+  Name: "dytt-ca"
+  CertFileLocalAddr: "D:/gopath/src/github.com/jf-011101/simplepir/config/cert/user/dytt-user.pem"
+  KeyFileLocalAddr: "D:/gopath/src/github.com/jf-011101/simplepir/config/cert/user/dytt-user-key.pem"
+
+
+

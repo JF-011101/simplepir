@@ -1,6 +1,6 @@
 syntax = "proto3";
 package pir;
-option go_package = "github.com/jf-011101/simplepir/grpc_gen/pir";
+option go_package = "github.com/jf-011101/simplepir/grpc_gen/pirs";
 
 // protoc -I. --go_out=:D:/gopath/src ./idl/*.proto
 message pir_query_request {

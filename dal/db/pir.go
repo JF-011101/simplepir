@@ -11,7 +11,7 @@ import (
 // Pi Gorm Data Structures
 type Pi struct {
 	gorm.Model
-	PrivateInfo uint64 `gorm:"index:idx_privateinfo,unique;type:varchar(256);not null" json:"privateinfo"`
+	PhoneNumber uint64 `gorm:"index:idx_privateinfo,unique;type:varchar(256);not null" json:"privateinfo"`
 }
 
 func (Pi) TableName() string {
@@ -19,7 +19,7 @@ func (Pi) TableName() string {
 }
 
 // QueryPi query list of pi info
-func QueryPi(ctx context.Context, piName string) ([]*Pi, error) {
+func QueryPi(ctx context.Context, piName uint64) ([]*Pi, error) {
 	res := make([]*Pi, 0)
 	if err := DB.WithContext(ctx).Where("pi_name = ?", piName).Find(&res).Error; err != nil {
 		return nil, err
