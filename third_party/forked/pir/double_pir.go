@@ -76,15 +76,15 @@ func (pi *DoublePIR) Setup(DB *Database, shared State, p Params) (State, Msg) {
 	A1 := shared.data[0]
 	A2 := shared.data[1]
 
-	H1 := MatrixMul(DB.data, A1)
+	H1 := MatrixMul(DB.Data, A1)
 	H1.Transpose()
 	H1.Expand(p.p, p.delta())
-	H1.ConcatCols(DB.info.x)
+	H1.ConcatCols(DB.Info.x)
 
 	H2 := MatrixMul(H1, A2)
 
 	// pack the database more tightly, because the online computation is memory-bound
-	DB.data.Add(p.p / 2)
+	DB.Data.Add(p.p / 2)
 	DB.Squish()
 
 	H1.Add(p.p / 2)
@@ -94,13 +94,13 @@ func (pi *DoublePIR) Setup(DB *Database, shared State, p Params) (State, Msg) {
 }
 
 func (pi *DoublePIR) FakeSetup(DB *Database, p Params) (State, float64) {
-	info := DB.info
+	info := DB.Info
 	H1 := MatrixRand(p.n*p.delta()*info.x, p.l/info.x, 0, p.p)
 	offline_download := float64(p.n*p.delta()*info.x*p.n*uint64(p.logq)) / (8.0 * 1024.0)
 	fmt.Printf("\t\tOffline download: %d KB\n", uint64(offline_download))
 
 	// pack the database more tightly, because the online computation is memory-bound
-	DB.data.Add(p.p / 2)
+	DB.Data.Add(p.p / 2)
 	DB.Squish()
 
 	H1.Add(p.p / 2)
@@ -120,7 +120,7 @@ func (pi *DoublePIR) Query(i uint64, shared State, p Params, info DBinfo) (State
 	err1 := MatrixGaussian(p.m, 1)
 	query1 := MatrixMul(A1, secret1)
 	query1.MatrixAdd(err1)
-	query1.data[i2] += C.Elem(p.Delta())
+	query1.Data[i2] += C.Elem(p.Delta())
 
 	if p.m%info.squishing != 0 {
 		query1.AppendZeros(info.squishing - (p.m % info.squishing))
@@ -134,14 +134,14 @@ func (pi *DoublePIR) Query(i uint64, shared State, p Params, info DBinfo) (State
 		err2 := MatrixGaussian(p.l/info.x, 1)
 		query2 := MatrixMul(A2, secret2)
 		query2.MatrixAdd(err2)
-		query2.data[i1+j] += C.Elem(p.Delta())
+		query2.Data[i1+j] += C.Elem(p.Delta())
 
 		if (p.l/info.x)%info.squishing != 0 {
 			query2.AppendZeros(info.squishing - ((p.l / info.x) % info.squishing))
 		}
 
 		state.data = append(state.data, secret2)
-		msg.data = append(msg.data, query2)
+		msg.Data = append(msg.Data, query2)
 	}
 
 	return state, msg
@@ -153,35 +153,35 @@ func (pi *DoublePIR) Answer(DB *Database, query MsgSlice, server State, shared S
 
 	a1 := new(Matrix)
 	num_queries := uint64(len(query.data))
-	batch_sz := DB.data.rows / num_queries
+	batch_sz := DB.Data.Rows / num_queries
 
 	last := uint64(0)
 	for batch, q := range query.data {
-		q1 := q.data[0]
+		q1 := q.Data[0]
 		if batch == int(num_queries-1) {
-			batch_sz = DB.data.rows - last
+			batch_sz = DB.Data.Rows - last
 		}
-		a := MatrixMulVecSub(DB.data.Rows(last, batch_sz),
-			q1, p.p/2, DB.info.basis, DB.info.squishing)
+		a := MatrixMulVecSub(DB.Data.RowsM(last, batch_sz),
+			q1, p.p/2, DB.Info.basis, DB.Info.squishing)
 		a1.Concat(a)
 		last += batch_sz
 	}
 
 	a1.Transpose()
 	a1.Expand(p.p, p.delta())
-	a1.ConcatCols(DB.info.x)
+	a1.ConcatCols(DB.Info.x)
 
 	h1 := MatrixMul(a1, A2)
 	msg := MakeMsg(h1)
 
 	for _, q := range query.data {
-		for j := uint64(0); j < DB.info.ne/DB.info.x; j++ {
-			q2 := q.data[1+j]
+		for j := uint64(0); j < DB.Info.ne/DB.Info.x; j++ {
+			q2 := q.Data[1+j]
 			a2 := MatrixMulVecSub(H1, q2, p.p/2, 10, 3)
 			h2 := MatrixMulVec(a1, q2)
 
-			msg.data = append(msg.data, a2)
-			msg.data = append(msg.data, h2)
+			msg.Data = append(msg.Data, a2)
+			msg.Data = append(msg.Data, h2)
 		}
 	}
 
@@ -190,32 +190,32 @@ func (pi *DoublePIR) Answer(DB *Database, query MsgSlice, server State, shared S
 
 func (pi *DoublePIR) Recover(i uint64, batch_index uint64, offline Msg,
 	answer Msg, client State, p Params, info DBinfo) uint64 {
-	H2 := offline.data[0]
-	h1 := answer.data[0]
+	H2 := offline.Data[0]
+	h1 := answer.Data[0]
 	secret1 := client.data[0]
 
 	offset := (info.ne / info.x * 2) * batch_index // for batching
 	var vals []uint64
 	for i := uint64(0); i < info.ne/info.x; i++ {
-		a2 := answer.data[1+2*i+offset]
-		h2 := answer.data[2+2*i+offset]
+		a2 := answer.Data[1+2*i+offset]
+		h2 := answer.Data[2+2*i+offset]
 		secret2 := client.data[1+i]
 
 		for j := uint64(0); j < info.x; j++ {
 			state := a2.RowsDeepCopy(j*p.n*p.delta(), p.n*p.delta())
-			state.Concat(h2.Rows(j*p.delta(), p.delta()))
+			state.Concat(h2.RowsM(j*p.delta(), p.delta()))
 
 			hint := H2.RowsDeepCopy(j*p.n*p.delta(), p.n*p.delta())
-			hint.Concat(h1.Rows(j*p.delta(), p.delta()))
+			hint.Concat(h1.RowsM(j*p.delta(), p.delta()))
 
 			interm := MatrixMul(hint, secret2)
 			state.MatrixSub(interm)
 			state.Round(p)
 			state.Contract(p.p, p.delta())
 
-			noised := uint64(state.data[p.n])
+			noised := uint64(state.Data[p.n])
 			for l := uint64(0); l < p.n; l++ {
-				noised -= uint64(secret1.data[l] * state.data[l])
+				noised -= uint64(secret1.Data[l] * state.Data[l])
 				noised = noised % (1 << p.logq)
 			}
 			vals = append(vals, p.Round(noised))
@@ -228,5 +228,5 @@ func (pi *DoublePIR) Recover(i uint64, batch_index uint64, offline Msg,
 
 func (pi *DoublePIR) Reset(DB *Database, p Params) {
 	DB.Unsquish()
-	DB.data.Sub(p.p / 2)
+	DB.Data.Sub(p.p / 2)
 }

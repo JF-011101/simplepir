@@ -1,7 +1,9 @@
 package pir
 
-import "math"
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 // TODO: Change this to hold cryptogrphic keys only
 type State struct {
@@ -9,12 +11,17 @@ type State struct {
 }
 
 type Msg struct {
-	data []*Matrix
+	Data []*Matrix
 }
+
+// func NewMsg() Msg {
+// 	data := make([]*Matrix, 0, 1)
+// 	return Msg{Data: data}
+// }
 
 func (m *Msg) size() uint64 {
 	sz := uint64(0)
-	for _, d := range m.data {
+	for _, d := range m.Data {
 		sz += d.size()
 	}
 	return sz
@@ -43,7 +50,7 @@ func MakeState(elems ...*Matrix) State {
 func MakeMsg(elems ...*Matrix) Msg {
 	msg := Msg{}
 	for _, elem := range elems {
-		msg.data = append(msg.data, elem)
+		msg.Data = append(msg.Data, elem)
 	}
 	return msg
 }

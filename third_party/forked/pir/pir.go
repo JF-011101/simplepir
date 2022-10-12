@@ -34,16 +34,16 @@ type PIR interface {
 
 // Run PIR's online phase, with a random preprocessing (to skip the offline phase).
 // Gives accurate bandwidth and online time measurements.
-func RunFakePIR(pi PIR, DB *Database, p Params, i []uint64, 
-                f *os.File, profile bool) (float64, float64, float64, float64) {
+func RunFakePIR(pi PIR, DB *Database, p Params, i []uint64,
+	f *os.File, profile bool) (float64, float64, float64, float64) {
 	fmt.Printf("Executing %s\n", pi.Name())
 	debug.SetGCPercent(-1)
 
 	num_queries := uint64(len(i))
-	if DB.data.rows/num_queries < DB.info.ne {
+	if DB.Data.Rows/num_queries < DB.Info.ne {
 		panic("Too many queries to handle!")
 	}
-	shared_state := pi.Init(DB.info, p)
+	shared_state := pi.Init(DB.Info, p)
 
 	fmt.Println("Setup...")
 	server_state, bw := pi.FakeSetup(DB, p)
@@ -54,7 +54,7 @@ func RunFakePIR(pi PIR, DB *Database, p Params, i []uint64,
 	start := time.Now()
 	var query MsgSlice
 	for index, _ := range i {
-		_, q := pi.Query(i[index], shared_state, p, DB.info)
+		_, q := pi.Query(i[index], shared_state, p, DB.Info)
 		query.data = append(query.data, q)
 	}
 	printTime(start)
@@ -83,7 +83,7 @@ func RunFakePIR(pi PIR, DB *Database, p Params, i []uint64,
 	debug.SetGCPercent(100)
 	pi.Reset(DB, p)
 
-	if offline_comm + online_comm != bw {
+	if offline_comm+online_comm != bw {
 		panic("Should not happen!")
 	}
 
@@ -96,13 +96,13 @@ func RunPIR(pi PIR, DB *Database, p Params, i []uint64) (float64, float64) {
 	debug.SetGCPercent(-1)
 
 	num_queries := uint64(len(i))
-	if DB.data.rows/num_queries < DB.info.ne {
+	if DB.Data.Rows/num_queries < DB.Info.ne {
 		panic("Too many queries to handle!")
 	}
-	batch_sz := DB.data.rows / (DB.info.ne * num_queries) * DB.data.cols
+	batch_sz := DB.Data.Rows / (DB.Info.ne * num_queries) * DB.Data.Cols
 	bw := float64(0)
 
-	shared_state := pi.Init(DB.info, p)
+	shared_state := pi.Init(DB.Info, p)
 
 	fmt.Println("Setup...")
 	start := time.Now()
@@ -119,7 +119,7 @@ func RunPIR(pi PIR, DB *Database, p Params, i []uint64) (float64, float64) {
 	var query MsgSlice
 	for index, _ := range i {
 		index_to_query := i[index] + uint64(index)*batch_sz
-		cs, q := pi.Query(index_to_query, shared_state, p, DB.info)
+		cs, q := pi.Query(index_to_query, shared_state, p, DB.Info)
 		client_state = append(client_state, cs)
 		query.data = append(query.data, q)
 	}
@@ -147,11 +147,11 @@ func RunPIR(pi PIR, DB *Database, p Params, i []uint64) (float64, float64) {
 	for index, _ := range i {
 		index_to_query := i[index] + uint64(index)*batch_sz
 		val := pi.Recover(index_to_query, uint64(index), offline_download, answer,
-			client_state[index], p, DB.info)
+			client_state[index], p, DB.Info)
 
 		if DB.GetElem(index_to_query) != val {
 			fmt.Printf("Batch %d (querying index %d -- row should be >= %d): Got %d instead of %d\n",
-				index, index_to_query, DB.data.rows/4, val, DB.GetElem(index_to_query))
+				index, index_to_query, DB.Data.Rows/4, val, DB.GetElem(index_to_query))
 			panic("Reconstruct failed!")
 		}
 	}

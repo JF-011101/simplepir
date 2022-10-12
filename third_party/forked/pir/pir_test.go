@@ -21,7 +21,7 @@ func TestDBMediumEntries(t *testing.T) {
 
 	vals := []uint64{1, 2, 3, 4}
 	DB := MakeDB(N, d, &p, vals)
-	if DB.info.packing != 1 || DB.info.ne != 1 {
+	if DB.Info.packing != 1 || DB.Info.ne != 1 {
 		panic("Should not happen.")
 	}
 
@@ -41,7 +41,7 @@ func TestDBSmallEntries(t *testing.T) {
 
 	vals := []uint64{1, 2, 3, 4}
 	DB := MakeDB(N, d, &p, vals)
-	if DB.info.packing <= 1 || DB.info.ne != 1 {
+	if DB.Info.packing <= 1 || DB.Info.ne != 1 {
 		panic("Should not happen.")
 	}
 
@@ -61,7 +61,7 @@ func TestDBLargeEntries(t *testing.T) {
 
 	vals := []uint64{1, 2, 3, 4}
 	DB := MakeDB(N, d, &p, vals)
-	if DB.info.packing != 0 || DB.info.ne <= 1 {
+	if DB.Info.packing != 0 || DB.Info.ne <= 1 {
 		panic("Should not happen.")
 	}
 
@@ -91,9 +91,9 @@ func TestSimplePirBW(t *testing.T) {
 	DB := SetupDB(N, d, &p)
 
 	fmt.Printf("Executing with entries consisting of %d (>= 1) bits; p is %d; packing factor is %d; number of DB elems per entry is %d.\n",
-		d, p.p, DB.info.packing, DB.info.ne)
+		d, p.p, DB.Info.packing, DB.Info.ne)
 
-	pir.GetBW(DB.info, p)
+	pir.GetBW(DB.Info, p)
 }
 
 // Print the BW used by DoublePIR
@@ -115,9 +115,9 @@ func TestDoublePirBW(t *testing.T) {
 	DB := SetupDB(N, d, &p)
 
 	fmt.Printf("Executing with entries consisting of %d (>= 1) bits; p is %d; packing factor is %d; number of DB elems per entry is %d.\n",
-		d, p.p, DB.info.packing, DB.info.ne)
+		d, p.p, DB.Info.packing, DB.Info.ne)
 
-	pir.GetBW(DB.info, p)
+	pir.GetBW(DB.Info, p)
 }
 
 // Test SimplePIR correctness on DB with short entries.
@@ -129,6 +129,25 @@ func TestSimplePir(t *testing.T) {
 
 	DB := MakeRandomDB(N, d, &p)
 	RunPIR(&pir, DB, p, []uint64{262144})
+}
+
+func TestSimplePir2(t *testing.T) {
+	N := uint64(1 << 17)
+	t.Log(N)
+	d := uint64(8)
+	pir := SimplePIR{}
+	p := pir.PickParams(N, d, SEC_PARAM, LOGQ)
+
+	DB := MakeRandomDB(N, d, &p)
+
+	t.Log(DB.Data.Data[0])
+	var a int
+	var err error
+	if a, err = strconv.Atoi("j"); err != nil {
+		t.Log(err)
+	}
+	t.Log(a)
+	//RunPIR(&pir, DB, p, []uint64{262144})
 }
 
 // Test SimplePIR correctness on DB with long entries
@@ -196,7 +215,7 @@ func TestDoublePirLongRow(t *testing.T) {
 	DB := MakeRandomDB(N, d, &p)
 
 	fmt.Printf("Executing with entries consisting of %d (>= 1) bits; p is %d; packing factor is %d; number of DB elems per entry is %d.\n",
-		d, p.p, DB.info.packing, DB.info.ne)
+		d, p.p, DB.Info.packing, DB.Info.ne)
 
 	RunPIR(&pir, DB, p, []uint64{1 << 19})
 }
